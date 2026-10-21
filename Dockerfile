@@ -1,19 +1,13 @@
 # syntax=docker/dockerfile:1
 # Prepare the base environment.
 FROM dhi.io/python:3.12-debian13-dev AS build-stage
-#FROM python:3.12.10-slim-bookworm AS build-stage
 RUN apt-get update -y \
   && apt-get install -y passwd  gcc libpq-dev \
   && rm -rf /var/lib/apt/lists/* \
   && pip install --upgrade pip
 
 # uv install
-# grab /uvx too if you need it
-COPY --from=ghcr.io/astral-sh/uv:0.11.1 /uv /bin/
-
-#update permissoins
-#RUN chmod 755 /etc
-#RUN chmod 555 /etc/bash.bashrc
+COPY --from=ghcr.io/astral-sh/uv:0.12 /uv /bin/
 
 #update add user
 RUN groupadd --gid 1000  app
@@ -28,7 +22,7 @@ RUN rm -f uv.lock
 RUN rm -rf pyproject.toml
 
 ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1
+  PYTHONUNBUFFERED=1
 
 COPY fonts ./fonts
 
@@ -60,7 +54,6 @@ RUN chown -R app:app /app
 
 ##################################################################################
 FROM dhi.io/python:3.12-debian13-dev AS runtime-stage
-#FROM python:3.12.10-slim-bookworm AS runtime-stage
 LABEL org.opencontainers.image.authors=asi@dbca.wa.gov.au
 LABEL org.opencontainers.image.source=https://github.com/dbca-wa/authome
 
@@ -69,7 +62,7 @@ COPY --from=build-stage /etc/group /etc/
 COPY --from=build-stage /etc/passwd /etc/
 
 ENV PATH="/app/.venv/bin:$PATH" \
-    PYTHONUNBUFFERED=1
+  PYTHONUNBUFFERED=1
 
 # Copy over the built project and virtualenv
 COPY --from=build-stage --chown=app:app /app /app
